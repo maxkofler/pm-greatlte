@@ -1,0 +1,28 @@
+# Reference: <https://postmarketos.org/devicepkg>
+pkgname=device-samsung-greatlte
+pkgdesc="Samsung Galaxy Note 8"
+pkgver=0.1
+pkgrel=0
+url="https://postmarketos.org"
+license="MIT"
+arch="aarch64"
+options="!check !archcheck"
+depends="
+	linux-samsung-greatlte
+	mkbootimg
+	postmarketos-base
+"
+makedepends="devicepkg-dev"
+source="deviceinfo"
+
+build() {
+	devicepkg_build $startdir $pkgname
+}
+
+package() {
+	devicepkg_package $startdir $pkgname
+}
+
+sha512sums="
+db408f0b73e8f395c380a163b3685f3a5ba337c56cab87992cad06f0775e1e63f9eccc42167c29dd8e28552e483e255868e2a21ca210682d3cf6748d275c0e5c  deviceinfo
+"

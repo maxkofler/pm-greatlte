@@ -1,0 +1,71 @@
+# Reference: <https://postmarketos.org/vendorkernel>
+# Kernel config based on: arch/arm64/configs/(CHANGEME!)
+
+pkgname=linux-samsung-greatlte
+pkgver=4.4.302
+pkgrel=0
+pkgdesc="Samsung Galaxy Note 8 kernel fork"
+arch="aarch64"
+_carch="arm64"
+_flavor="samsung-greatlte"
+url="https://kernel.org"
+license="GPL-2.0-only"
+options="!strip !check !tracedeps pmb:cross-native"
+makedepends="
+	bash
+	xz
+	bc
+	bison
+	devicepkg-dev
+	flex
+	openssl-dev
+	perl
+	dtbtool-exynos
+"
+
+# Source
+_repository="android_kernel_samsung_universal8895"
+_commit="747047a4b7482229f66266f24f815458d0c3b6f7"
+_config="config-$_flavor.$arch"
+source="
+	$pkgname-$_commit.tar.gz::https://github.com/corsicanu/$_repository/archive/$_commit.tar.gz
+	$_config
+"
+builddir="$srcdir/$_repository-$_commit"
+_outdir="out"
+
+
+prepare() {
+	ls $srcdir
+	${CC:-gcc} -v
+	default_prepare
+	. downstreamkernel_prepare
+}
+
+build() {
+	unset LDFLAGS
+	make O="$_outdir" ARCH="$_carch" CC="${CC:-gcc}" \
+		KBUILD_BUILD_VERSION="$((pkgrel + 1 ))-postmarketOS"
+
+	# Generate master DTB (deviceinfo_bootimg_qcdt)
+	#dtbTool -s 2048 -p "scripts/dtc/" -o "arch/arm64/boot/dt.img" "arch/arm/boot/"
+
+	dtbTool-exynos 	--pagesize 2048 \
+					--platform 0x50a6 \
+					--subtype  0x217584da \
+					-o 	"$_outdir/arch/$_carch/boot/dt.img" \
+						$(find "$_outdir/arch/$_carch/boot/dts/" -name *greatlte*.dtb)
+						#"$_outdir/arch/$_carch/boot/dts/exynos8895-greatlte_eur_open_02.dtb" \ # list of device tree binaries
+						#"$_outdir/arch/$_carch/boot/dts/exynos8895-greatlte_eur_open_06.dtb" # adjust filenames to ones related to your device
+						#"$_outdir/arch/$_carch/boot/dts/exynos8895-greatlte_eur_open_09.dtb"
+}
+
+package() {
+	downstreamkernel_package "$builddir" "$pkgdir" "$_carch" \
+		"$_flavor" "$_outdir"
+}
+
+sha512sums="
+9e44fcb8a506e044fe41bed733bbc5165b44d746bac2bf5fecd588a8c2b95b25243c9d9b7867721179236613f582f1d1137a3e049a13663bdfc5f97c95b1290b  linux-samsung-greatlte-747047a4b7482229f66266f24f815458d0c3b6f7.tar.gz
+12fd6c4822cf0b868d50989131f1ea4520f9e1b8e8578cb955354dc923f7c7fc40922b934977db62486657aad6972a8e5fa3a1891b576af2cf02515f1f908ca9  config-samsung-greatlte.aarch64
+"
